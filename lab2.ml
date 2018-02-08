@@ -4,7 +4,7 @@
                              Spring 2018
  *)
 
-
+open List;;
 (*
 Objective:
 
@@ -44,9 +44,11 @@ To think about before you start coding:
 Now implement the two functions curry and uncurry.
 ......................................................................*)
 
-let curry = fun _ -> failwith "curry not implemented" ;;
+let curry (f: ('a * 'b) -> 'c)  (a: 'a) (b: 'b):'c = 
+  f (a,b) ;;
      
-let uncurry = fun _ -> failwith "uncurry not implemented" ;;
+let uncurry (f: 'a -> 'b -> 'c) ((a,b): 'a *'b ):  'c = 
+  f a b;;
 
 (*......................................................................
 Exercise 2: OCaml's built in binary operators, like ( + ) and ( * ) are
@@ -62,11 +64,10 @@ functions.
 ......................................................................*)
 
 let plus =
-  fun _ -> failwith "plus not implemented"
+  uncurry ( + ) ;;
      
 let times =
-  fun _ -> failwith "times not implemented" ;;
-  
+  uncurry ( * ) ;; 
 (*......................................................................
 Exercise 3: Recall the prods function from Lab 1:
 
@@ -80,7 +81,7 @@ do you need the uncurried times function?
 ......................................................................*)
 
 let prods =
-  fun _ -> failwith "prods not implemented" ;; 
+  map times;; 
 
 (*======================================================================
 Part 2: Option types
@@ -113,8 +114,10 @@ Reimplement max_list, but this time, it should return an int option
 instead of an int.
 ......................................................................*)
 
-let max_list (lst : int list) : int option =
-  failwith "max_list not implemented" ;;
+let rec max_list (lst : int list) : int option =
+  match lst with
+  | [] -> None
+  | hd :: tl -> max (Some hd) (max_list tl) ;;
   
 (*......................................................................
 Exercise 5: Write a function to return the smaller of two int options,
@@ -124,7 +127,9 @@ useful.
 ......................................................................*)
 
 let min_option (x : int option) (y : int option) : int option =
-  failwith "min_option not implemented" ;;
+  match x,y with
+  | None,a | a,None -> a
+  | a,b -> min a b;;
      
 (*......................................................................
 Exercise 6: Write a function to return the larger of two int options, or
@@ -133,7 +138,9 @@ other.
 ......................................................................*)
 
 let max_option (x : int option) (y : int option) : int option =
-  failwith "max_option not implemented" ;;
+  match x,y with
+  | None,a | a,None -> a
+  | a,b -> max a b;;;;
 
 (*======================================================================
 Part 3: Polymorphism practice
@@ -153,19 +160,20 @@ result appropriately returned.
 What is calc_option's function signature? Implement calc_option.
 ......................................................................*)
 
-let calc_option =
-  fun _ -> failwith "calc_option not implemented" ;;
-     
+let calc_option (f: 'a  -> 'b  -> 'c ) (a: 'a option) (b:'b option) : 'c option = 
+  match a, b with 
+  |None, a | a,None -> a
+  |Some a, Some b -> Some (f a b) ;;    
 (*......................................................................
 Exercise 8: Now rewrite min_option and max_option using the higher-order
 function calc_option. Call them min_option_2 and max_option_2.
 ......................................................................*)
   
 let min_option_2 =
-  fun _ -> failwith "min_option_2 not implemented" ;;
+  calc_option min;;
      
 let max_option_2 =
-  fun _ -> failwith "max_option_2 not implemented" ;;
+  calc_option max ;;
 
 (*......................................................................
 Exercise 9: Now that we have calc_option, we can use it in other
@@ -176,7 +184,7 @@ None, return the other.
 ......................................................................*)
   
 let and_option =
-  fun _ -> failwith "and_option not implemented" ;;
+  calc_option ( && ) ;;
   
 (*......................................................................
 Exercise 10: In Lab 1, you implemented a function zip that takes two
@@ -195,8 +203,10 @@ type of the result? Did you provide full typing information in the
 first line of the definition?
 ......................................................................*)
 
-let zip_exn =
-  fun _ -> failwith "zip_exn not implemented" ;;
+let rec zip_exn (x : 'a list) (y : 'b list) : ('a *'b) list =
+  match x, y with
+  | [], [] -> []
+  | xhd :: xtl, yhd :: ytl -> (xhd, yhd) :: (zip_exn xtl ytl) ;;
 
 (*......................................................................
 Exercise 11: Another problem with the implementation of zip_exn is that,
@@ -207,8 +217,12 @@ generate an alternate solution without this property?
 Do so below in a new definition of zip.
 ......................................................................*)
 
-let zip =
-  fun _ -> failwith "zip not implemented" ;;
+let rec zip (x : 'a list) (y : 'b list) : ('a option *'b option) list =
+  match x, y with
+  | [], [] -> []
+  | xhd :: xtl, yhd :: ytl -> (Some xhd, Some yhd) :: (zip xtl ytl)
+  | hd::tl, [] -> (Some hd, None) :: (zip tl [])
+  | [], hd::tl -> (None, Some hd) :: (zip [] tl) ;;
 
 (*====================================================================
 Part 4: Factoring out None-handling
@@ -241,7 +255,9 @@ adjusted for the result type. Implement the maybe function.
 ......................................................................*)
   
 let maybe (f : 'a -> 'b) (x : 'a option) : 'b option =
-  failwith "maybe not implemented" ;; 
+  match x with 
+  |None -> None
+  |Some x -> Some (f x) ;; 
 
 (*......................................................................
 Exercise 13: Now reimplement dotprod to use the maybe function. (The
@@ -255,7 +271,7 @@ let sum : int list -> int =
   List.fold_left (+) 0 ;;
 
 let dotprod (a : int list) (b : int list) : int option =
-  failwith "dot_prod not implemented" ;; 
+  sum (maybe (a  b))  ;; 
 
 (*......................................................................
 Exercise 14: Reimplement zip along the same lines, in zip_2 below. 
